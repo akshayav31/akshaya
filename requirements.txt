@@ -1,0 +1,7 @@
+streamlit
+wikipedia
+SpeechRecognition
+pillow
+opencv-python
+numpy
+pyzbar
