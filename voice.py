@@ -174,8 +174,8 @@ with tab3:
     AKSHAYA V, DHARSHINI J, HARSHITHA B.M, SRIMATHI K
 
     **Contact:**  
-    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com  
-    - Website: [https://yourwebsite.com](https://yourwebsite.com)
+    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com,akshayavelu31@gmail.com,manjunath.m37@gmail.com
+    - 
 
     ---
     Thank you for using our app!
