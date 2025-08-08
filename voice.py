@@ -3,6 +3,10 @@ import wikipedia
 import speech_recognition as sr
 import tempfile
 import os
+from PIL import Image
+import cv2
+import numpy as np
+
 st.set_page_config(page_title="Chatbot + QR Scanner", layout="centered")
 st.markdown(
     """
@@ -122,6 +126,7 @@ with tab2:
             st.success(f"🔓 Decoded Data: {decoded_data}")
         else:
             st.warning("⚠️ No QR code detected.")
+
 # --- TAB 3: About Us ---
 with tab3:
     st.subheader("About Us")
@@ -135,17 +140,16 @@ with tab3:
 
     ---
     *Developed by:*  
-    DHARSHINI J, SRIMATHI K, HARSHITHA B.M, AKSHAYA V
+    AKSHAYA V, DHARSHINI J, HARSHITHA B.M, SRIMATHI K
 
     *Contact:*  
-    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com ,manjunath.m37@gmail.com, akshayavelu31@gmail.com    
-    
+    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com  
+
     ---
     Thank you for using our app! Feel free to contribute or suggest features.
     """)
 
-    st.subheader("🔗 Link of the Project")
-    st.markdown("[Click here to view the project](https://igq6tcjypjpmh9hivnabjc.streamlit.app/)")
+    # Removed website and project link section
 
     st.subheader("🖼️ Snapshots of the Project")
 
