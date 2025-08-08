@@ -143,8 +143,7 @@ with tab3:
     AKSHAYA V, DHARSHINI J, HARSHITHA B.M, SRIMATHI K
 
     *Contact:*  
-    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com  
-
+    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com,akshayavelu31@gmail.com,manjunath.m37@gmail.com
     ---
     Thank you for using our app! Feel free to contribute or suggest features.
     """)
@@ -173,3 +172,4 @@ with tab3:
             st.image(fpath, use_column_width=True)
     else:
         st.info("No snapshots uploaded yet.")
+
