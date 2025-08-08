@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as 
 import wikipedia
 import speech_recognition as sr
 import tempfile
@@ -179,18 +179,5 @@ with tab3:
     translation.install()
     return translation.gettext
 
-def main():
-    # Choose language from command line argument or default to English
-    if len(sys.argv) > 1:
-        lang = sys.argv[1]
-    else:
-        lang = 'en'
 
-    _ = set_language(lang)
-
-    print(_("hello"))
-    print(_("goodbye"))
-
-if __name__ == "__main__":
-    main()
 
