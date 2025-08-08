@@ -173,3 +173,24 @@ with tab3:
             st.image(fpath, use_column_width=True)
     else:
         st.info("No snapshots uploaded yet.")
+        def set_language(lang_code):
+    locales_dir = os.path.join(os.path.dirname(__file__), 'locales')
+    translation = gettext.translation('messages', localedir=locales_dir, languages=[lang_code], fallback=True)
+    translation.install()
+    return translation.gettext
+
+def main():
+    # Choose language from command line argument or default to English
+    if len(sys.argv) > 1:
+        lang = sys.argv[1]
+    else:
+        lang = 'en'
+
+    _ = set_language(lang)
+
+    print(_("hello"))
+    print(_("goodbye"))
+
+if __name__ == "__main__":
+    main()
+
