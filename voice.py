@@ -1,149 +1,175 @@
 import streamlit as st
 import wikipedia
 import speech_recognition as sr
-import pyttsx3
-import cv2
-import numpy as np
-import pandas as pd
-import qrcode
-import datetime
-from PIL import Image
-from pyzbar.pyzbar import decode
 import tempfile
 import os
+from PIL import Image
+import cv2
+import numpy as np
 
-# Initialize TTS engine
-tts = pyttsx3.init()
-
-# Set app configuration
-st.set_page_config(page_title="All-in-One Tool", layout="centered")
-st.title("🤖 Wikipedia Bot + 📷 QR Tools + 🧹 Cache Clear")
-
-# Dark mode toggle
-dark_mode = st.toggle("🌗 Dark Mode")
-if dark_mode:
-    st.markdown("<style>body { background-color: #1e1e1e; color: white; }</style>", unsafe_allow_html=True)
+st.set_page_config(page_title="Chatbot + QR Scanner", layout="centered")
+st.markdown(
+    """
+    <style>
+    .glow-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: url('https://cdn-icons-png.flaticon.com/512/4712/4712039.png') no-repeat center/cover;
+        box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc;
+        animation: pulse 2s infinite;
+        margin: auto;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 20px #00ffcc; }
+        50% { box-shadow: 0 0 40px #00ffcc; }
+        100% { box-shadow: 0 0 20px #00ffcc; }
+    }
+    </style>
+    <div class="glow-icon"></div>
+    """,
+    unsafe_allow_html=True
+)
+st.title("🤖 Chatbot + 📷 QR Code Scanner")
 
 # Tabs
-tab1, tab2, tab3 = st.tabs(["📚 Wiki Chatbot", "📷 QR Scanner", "🧾 QR Generator"])
+tab1, tab2, tab3 = st.tabs(["📚 Wikipedia Chatbot", "📷 QR Code Scanner", "ℹ️ About Us"])
 
-# -------------------------------
-# TAB 1: Wikipedia Chatbot
-# -------------------------------
+# --- TAB 1: Wikipedia Chatbot ---
 with tab1:
-    st.subheader("Wikipedia Chatbot 🤖")
+    st.subheader("Ask anything. Type or speak!")
 
-    # Language selection
-    lang = st.selectbox("Choose Wikipedia language", ["en", "hi", "ta", "kn", "fr", "de"])
-    wikipedia.set_lang(lang)
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-    # Voice or text input
-    input_mode = st.radio("Input Method", ["Text", "Voice"])
-
-    if input_mode == "Text":
-        query = st.text_input("Enter your question:")
-    else:
-        if st.button("🎙️ Record Voice"):
-            recognizer = sr.Recognizer()
-            with sr.Microphone() as source:
-                st.info("Listening...")
-                audio = recognizer.listen(source, timeout=5)
-                try:
-                    query = recognizer.recognize_google(audio, language=lang)
-                    st.success(f"You said: {query}")
-                except sr.UnknownValueError:
-                    query = ""
-                    st.error("Sorry, could not understand.")
-                except:
-                    query = ""
-                    st.error("Error during voice recognition.")
-
-    if st.button("🔍 Search Wikipedia") and query:
+    def get_wikipedia_summary(query):
         try:
-            result = wikipedia.summary(query, sentences=2)
-            st.success(result)
-            tts.say(result)
-            tts.runAndWait()
-        except wikipedia.exceptions.DisambiguationError as e:
-            st.warning("Too many options, try to be more specific.")
-        except:
-            st.error("No result found.")
+            results = wikipedia.search(query)
+            if not results:
+                return "❌ Sorry, no results found."
+            summary = wikipedia.summary(results[0], sentences=2, auto_suggest=False, redirect=True)
+            return summary
+        except wikipedia.DisambiguationError as e:
+            return f"⚠️ Too broad. Did you mean: {', '.join(e.options[:5])}?"
+        except wikipedia.PageError:
+            return "❌ Page not found."
+        except Exception as e:
+            return f"⚠️ Error: {str(e)}"
 
-# -------------------------------
-# TAB 2: QR Scanner
-# -------------------------------
-with tab2:
-    st.subheader("QR Code Scanner 📷")
-    method = st.radio("Choose method:", ["Webcam", "Upload Image"])
+    user_input_text = st.text_input("Type your question here:")
 
-    def save_qr(data):
-        file = "qr_scan_log.csv"
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        df = pd.DataFrame([[data, now]], columns=["Data", "Timestamp"])
-        if os.path.exists(file):
-            df.to_csv(file, mode='a', header=False, index=False)
+    audio_file = st.file_uploader("🎤 Or upload your voice question (WAV format)", type=["wav"])
+
+    if audio_file is not None:
+        recognizer = sr.Recognizer()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+            tmp_file.write(audio_file.read())
+            tmp_filename = tmp_file.name
+
+        with sr.AudioFile(tmp_filename) as source:
+            audio_data = recognizer.record(source)
+            try:
+                recognized_text = recognizer.recognize_google(audio_data)
+                st.success(f"You said: {recognized_text}")
+                user_input_text = recognized_text
+            except sr.UnknownValueError:
+                st.error("Sorry, could not understand your voice.")
+            except sr.RequestError:
+                st.error("Could not connect to speech recognition service.")
+
+        os.remove(tmp_filename)
+
+    user_input = user_input_text.strip() if user_input_text else ""
+
+    if user_input:
+        if user_input.lower() == "hi":
+            response = "Hello!"
+        elif user_input.lower() == "what is your name":
+            response = "I'm a chatbot."
         else:
-            df.to_csv(file, index=False)
+            response = get_wikipedia_summary(user_input)
 
-    if method == "Webcam":
-        if st.checkbox("Start Webcam"):
-            FRAME_WINDOW = st.image([])
-            cap = cv2.VideoCapture(0)
+        st.session_state.chat_history.append((user_input, response))
 
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+    if st.session_state.chat_history:
+        st.markdown("### 💬 Chat History")
+        for idx, (user, bot) in enumerate(reversed(st.session_state.chat_history), 1):
+            st.markdown(f"**🧑 You {idx}:** {user}")
+            st.markdown(f"**🤖 Bot {idx}:** {bot}")
+            st.markdown("---")
 
-                decoded_objs = decode(frame)
-                for obj in decoded_objs:
-                    data = obj.data.decode("utf-8")
-                    st.success(f"QR Code: {data}")
-                    save_qr(data)
-                    cap.release()
-                    FRAME_WINDOW.empty()
-                    st.stop()
+        if st.button("🗑️ Clear Chat History"):
+            st.session_state.chat_history.clear()
+            st.success("Chat history cleared!")
 
-                FRAME_WINDOW.image(frame, channels="BGR")
+# --- TAB 2: QR Code Scanner ---
+with tab2:
+    st.subheader("📷 Upload a QR Code Image to Scan")
 
-    elif method == "Upload Image":
-        uploaded_img = st.file_uploader("Upload Image", type=["png", "jpg", "jpeg"])
-        if uploaded_img:
-            img = Image.open(uploaded_img)
-            st.image(img, caption="Uploaded QR Image")
-            decoded_objs = decode(img)
-            if decoded_objs:
-                for obj in decoded_objs:
-                    data = obj.data.decode("utf-8")
-                    st.success(f"QR Code: {data}")
-                    save_qr(data)
-            else:
-                st.warning("No QR code found.")
+    uploaded_file = st.file_uploader("Upload QR image", type=["png", "jpg", "jpeg"])
 
-    with st.expander("📄 QR Scan History"):
-        try:
-            df = pd.read_csv("qr_scan_log.csv")
-            st.dataframe(df)
-        except:
-            st.info("No scan data available.")
+    def decode_qr_opencv(img):
+        detector = cv2.QRCodeDetector()
+        data, points, _ = detector.detectAndDecode(img)
+        if points is not None and data:
+            return data
+        return None
 
-    if st.button("🧹 Clear QR Scan History"):
-        if os.path.exists("qr_scan_log.csv"):
-            os.remove("qr_scan_log.csv")
-            st.success("Scan history cleared.")
+    if uploaded_file:
+        img = Image.open(uploaded_file)
+        st.image(img, caption="Uploaded QR Code", use_column_width=True)
 
-# -------------------------------
-# TAB 3: QR Generator
-# -------------------------------
+        img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        decoded_data = decode_qr_opencv(img_cv)
+
+        if decoded_data:
+            st.success(f"🔓 Decoded Data: {decoded_data}")
+        else:
+            st.warning("⚠️ No QR code detected.")
+
+# --- TAB 3: About Us ---
 with tab3:
-    st.subheader("QR Code Generator 🧾")
-    qr_data = st.text_input("Enter text to encode in QR:")
+    st.subheader("About Us")
+    st.markdown("""
+    ### Welcome to Chatbot + QR Scanner!
 
-    if st.button("Generate QR"):
-        qr_img = qrcode.make(qr_data)
-        st.image(qr_img, caption="Your QR Code")
+    This app combines two handy tools into one interface:
 
-        temp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-        qr_img.save(temp.name)
-        with open(temp.name, "rb") as f:
-            st.download_button("⬇️ Download QR", f, file_name="qr_code.png")
+    - 🤖 **Wikipedia Chatbot**: Ask questions by typing or uploading your voice! Powered by Wikipedia API and speech recognition.
+    - 📷 **QR Code Scanner**: Upload images containing QR codes and get the decoded information instantly.
+
+    ---
+    **Developed by:**  
+    AKSHAYA V, DHARSHINI J, HARSHITHA B.M, SRIMATHI K
+
+    **Contact:**  
+    - Email: dharshudharshu148@gmail.com, acquireness@gmail.com,akshayavelu31@gmail.com,manjunath.m37@gmail.com  
+
+    ---
+    Thank you for using our app! Feel free to contribute or suggest features.
+    """)
+
+    # Removed website and project link section
+
+    st.subheader("🖼️ Snapshots of the Project")
+
+    SNAPSHOT_DIR = "snapshots"
+    os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+
+    uploaded_files = st.file_uploader("Upload snapshots (multiple allowed)", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
+    if uploaded_files:
+        for file in uploaded_files:
+            file_path = os.path.join(SNAPSHOT_DIR, file.name)
+            with open(file_path, "wb") as f:
+                f.write(file.getbuffer())
+        st.success("✅ Files uploaded successfully!")
+
+    saved_files = os.listdir(SNAPSHOT_DIR)
+    if saved_files:
+        st.markdown("### Saved Snapshots:")
+        for fname in saved_files:
+            fpath = os.path.join(SNAPSHOT_DIR, fname)
+            st.image(fpath, use_column_width=True)
+    else:
+        st.info("No snapshots uploaded yet.")
