@@ -1,4 +1,4 @@
-import streamlit as 
+import streamlit 
 import wikipedia
 import speech_recognition as sr
 import tempfile
@@ -178,6 +178,7 @@ with tab3:
     translation = gettext.translation('messages', localedir=locales_dir, languages=[lang_code], fallback=True)
     translation.install()
     return translation.gettext
+
 
 
 
