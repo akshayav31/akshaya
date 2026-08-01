@@ -3,6 +3,7 @@ import wikipedia
 import speech_recognition as sr
 import tempfile
 import os
+import gettext
 from PIL import Image
 import cv2
 import numpy as np
@@ -174,10 +175,10 @@ with tab3:
     else:
         st.info("No snapshots uploaded yet.")
         def set_language(lang_code):
-    locales_dir = os.path.join(os.path.dirname(__file__), 'locales')
-    translation = gettext.translation('messages', localedir=locales_dir, languages=[lang_code], fallback=True)
-    translation.install()
-    return translation.gettext
+            locales_dir = os.path.join(os.path.dirname(__file__), 'locales')
+            translation = gettext.translation('messages', localedir=locales_dir, languages=[lang_code], fallback=True)
+            translation.install()
+            return translation.gettext
 
 
 
